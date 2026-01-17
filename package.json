@@ -1,14 +1,21 @@
 {
   "name": "not-notion",
   "version": "1.0.0",
-  "description": "",
+  "description": "Simple Planner App",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "dist": "electron-builder",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "build": {
+    "appId": "com.notnotion.app",
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    }
+  },
+  "author": "Rayhan Nasrulloh",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
