@@ -8,13 +8,29 @@ function createWindow () {
     webPreferences: {
       nodeIntegration: true, 
       contextIsolation: false 
-    }
+    },
+    // Tambahkan ikon di taskbar (opsional, jika file icon.ico ada)
+    icon: path.join(__dirname, 'icon.ico') 
   })
 
   win.loadFile('index.html')
-h
   win.setMenuBarVisibility(false)
 }
+
+// --- BAGIAN PENTING: SETTING STARTUP ---
+// Fungsi ini memerintahkan Windows untuk membuka aplikasi saat login
+const appFolder = path.dirname(process.execPath)
+const updateExe = path.resolve(appFolder, '..', 'Update.exe')
+const exeName = path.basename(process.execPath)
+
+app.setLoginItemSettings({
+  openAtLogin: true,    // True = Buka otomatis saat login/startup
+  path: process.execPath,
+  args: [
+    '--process-start-args', `"--hidden"` // Opsional: argumen tambahan
+  ]
+})
+// ----------------------------------------
 
 app.whenReady().then(() => {
   createWindow()
