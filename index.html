@@ -3,62 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <title>Notion Lite (Electron)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #fff; }
+        :root { --primary: #2e2e2e; --bg: #ffffff; --sidebar: #f7f7f5; --hover: #e6e6e6; }
+        body { margin: 0; display: flex; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--primary); overflow: hidden; }
         
-        .sidebar {
-            width: 250px;
-            background: #f7f7f5;
-            padding: 20px;
-            border-right: 1px solid #ddd;
-            display: flex;
-            flex-direction: column;
-        }
-        .logo { font-weight: bold; margin-bottom: 20px; color: #333; }
-        .menu-btn {
-            background: none; border: none; text-align: left;
-            padding: 8px; cursor: pointer; color: #555; border-radius: 4px;
-        }
-        .menu-btn:hover { background: #e0e0e0; color: #000; }
+        /* SIDEBAR */
+        .sidebar { width: 250px; background: var(--sidebar); padding: 20px; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; gap: 5px; }
+        .logo { font-weight: 700; margin-bottom: 20px; color: #333; display: flex; align-items: center; gap: 10px; }
+        .menu-btn { background: none; border: none; text-align: left; padding: 8px 10px; cursor: pointer; color: #555; border-radius: 4px; display: flex; align-items: center; gap: 10px; font-size: 14px; transition: 0.2s; }
+        .menu-btn:hover { background: var(--hover); color: #000; }
+        
+        /* Area Alarm di Sidebar */
+        .alarm-section { margin-top: auto; padding-top: 20px; border-top: 1px solid #ddd; }
+        .alarm-input { width: 100%; padding: 5px; margin-bottom: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        .alarm-btn { width: 100%; background: #333; color: white; border: none; padding: 6px; border-radius: 4px; cursor: pointer; }
+        .alarm-btn:hover { background: #555; }
 
-        /* Editor */
-        .main { flex: 1; padding: 40px 60px; overflow-y: auto; }
+        /* EDITOR UTAMA */
+        .main { flex: 1; display: flex; flex-direction: column; height: 100vh; }
         
-        #title {
-            width: 100%; border: none; font-size: 32px; font-weight: bold;
-            outline: none; margin-bottom: 20px; color: #37352f;
-        }
-        #editor {
-            outline: none; font-size: 16px; line-height: 1.6; min-height: 50vh; color: #37352f;
-        }
-        [contenteditable]:empty:before {
-            content: attr(placeholder); color: #aaa; display: block;
-        }
+        /* Toolbar di atas editor */
+        .toolbar { padding: 10px 60px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 10px; align-items: center; }
+        .tool-btn { background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+        .tool-btn:hover { background: #f7f7f5; }
+
+        /* Area Ketik */
+        .editor-container { flex: 1; overflow-y: auto; padding: 40px 60px; }
+        #title { width: 100%; border: none; font-size: 32px; font-weight: 700; outline: none; margin-bottom: 20px; color: #37352f; background: transparent; }
+        #editor { outline: none; font-size: 16px; line-height: 1.6; min-height: 50vh; }
+        
+        /* Styling khusus Checklist */
+        .todo-item { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
+        .todo-item input[type="checkbox"] { transform: scale(1.2); cursor: pointer; }
+
+        /* Placeholder trick */
+        [contenteditable]:empty:before { content: attr(placeholder); color: #aaa; display: block; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo">🚀 Planner Saya</div>
-        <button class="menu-btn" onclick="loadPage('Jadwal Hari Ini')">📅 Jadwal Hari Ini</button>
-        <button class="menu-btn" onclick="loadPage('Ide Project')">💡 Ide Project</button>
-        <button class="menu-btn" onclick="loadPage('Catatan')">📝 Catatan</button>
+        <div class="logo"><i class="fas fa-book"></i> Planner Saya</div>
+        <button class="menu-btn" onclick="loadPage('Jadwal Hari Ini')"><i class="fas fa-calendar-day"></i> Jadwal Hari Ini</button>
+        <button class="menu-btn" onclick="loadPage('Ide Project')"><i class="fas fa-lightbulb"></i> Ide Project</button>
+        <button class="menu-btn" onclick="loadPage('Catatan')"><i class="fas fa-sticky-note"></i> Catatan</button>
+
+        <div class="alarm-section">
+            <small style="color:#777; font-weight:bold;">⏰ Set Alarm</small>
+            <input type="time" id="alarm-time" class="alarm-input">
+            <input type="text" id="alarm-msg" class="alarm-input" placeholder="Pesan pengingat...">
+            <button class="alarm-btn" onclick="setAlarm()">Aktifkan</button>
+        </div>
     </div>
 
     <div class="main">
-        <input type="text" id="title" placeholder="Judul Halaman...">
-        <div id="editor" contenteditable="true" placeholder="Mulai ketik rencanamu di sini..."></div>
+        <div class="toolbar">
+            <button class="tool-btn" onclick="insertCheckbox()"><i class="fas fa-check-square"></i> Checklist</button>
+            <button class="tool-btn" onclick="insertDate()"><i class="fas fa-calendar-alt"></i> Tanggal</button>
+            <button class="tool-btn" onclick="document.execCommand('bold')"><b>B</b> Bold</button>
+        </div>
+
+        <div class="editor-container">
+            <input type="text" id="title" placeholder="Judul Halaman...">
+            <div id="editor" contenteditable="true" placeholder="Mulai ketik di sini..."></div>
+        </div>
     </div>
 
     <script>
         const titleInput = document.getElementById('title');
         const editor = document.getElementById('editor');
-        
-        // localstorage
+
+        // --- 1. LOGIKA SIMPAN  ---
         function saveData() {
             const pageTitle = titleInput.value;
             const content = editor.innerHTML;
-            
             if(pageTitle) {
                 localStorage.setItem('notion_content_' + pageTitle, content);
                 localStorage.setItem('last_opened_title', pageTitle);
@@ -67,18 +87,62 @@
 
         window.loadPage = function(pageName) {
             saveData();
-            
             titleInput.value = pageName;
-            
             const savedContent = localStorage.getItem('notion_content_' + pageName);
             editor.innerHTML = savedContent || "";
         }
 
         editor.addEventListener('input', saveData);
         titleInput.addEventListener('input', saveData);
+        editor.addEventListener('click', saveData);
 
         const lastPage = localStorage.getItem('last_opened_title') || 'Jadwal Hari Ini';
         loadPage(lastPage);
+
+        // --- 2. FITUR CHECKLIST ---
+        window.insertCheckbox = function() {
+            const checkboxHTML = `<div class="todo-item"><input type="checkbox">&nbsp;<span>Tugas baru...</span></div><br>`;
+            document.execCommand('insertHTML', false, checkboxHTML);
+            editor.focus();
+        }
+
+        // --- 3. FITUR KALENDER/TANGGAL ---
+        window.insertDate = function() {
+            const date = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.execCommand('insertText', false, date);
+        }
+
+        // --- 4. FITUR ALARM ---
+        window.setAlarm = function() {
+            const timeVal = document.getElementById('alarm-time').value;
+            const msgVal = document.getElementById('alarm-msg').value || "Waktunya cek jadwal!";
+            
+            if(!timeVal) return alert("Pilih jam dulu!");
+
+            const [hours, minutes] = timeVal.split(':');
+            const now = new Date();
+            const alarmTime = new Date();
+            alarmTime.setHours(hours);
+            alarmTime.setMinutes(minutes);
+            alarmTime.setSeconds(0);
+
+            // kalo jam udah lewat set buat besok
+            if(alarmTime < now) {
+                alarmTime.setDate(alarmTime.getDate() + 1);
+            }
+
+            const timeToWait = alarmTime - now;
+
+            alert(`Alarm diset untuk ${timeVal}`);
+
+            setTimeout(() => {
+                new Notification("Notion Lite Reminder", {
+                    body: msgVal,
+                    icon: "https://cdn-icons-png.flaticon.com/512/2693/2693507.png" 
+                });
+                alert("⏰ ALARM: " + msgVal); // Alert cadangan
+            }, timeToWait);
+        }
     </script>
 </body>
 </html>
