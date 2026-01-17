@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Notion Lite (Electron)</title>
+    <style>
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: #fff; }
+        
+        .sidebar {
+            width: 250px;
+            background: #f7f7f5;
+            padding: 20px;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+        }
+        .logo { font-weight: bold; margin-bottom: 20px; color: #333; }
+        .menu-btn {
+            background: none; border: none; text-align: left;
+            padding: 8px; cursor: pointer; color: #555; border-radius: 4px;
+        }
+        .menu-btn:hover { background: #e0e0e0; color: #000; }
+
+        /* Editor */
+        .main { flex: 1; padding: 40px 60px; overflow-y: auto; }
+        
+        #title {
+            width: 100%; border: none; font-size: 32px; font-weight: bold;
+            outline: none; margin-bottom: 20px; color: #37352f;
+        }
+        #editor {
+            outline: none; font-size: 16px; line-height: 1.6; min-height: 50vh; color: #37352f;
+        }
+        [contenteditable]:empty:before {
+            content: attr(placeholder); color: #aaa; display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">🚀 Planner Saya</div>
+        <button class="menu-btn" onclick="loadPage('Jadwal Hari Ini')">📅 Jadwal Hari Ini</button>
+        <button class="menu-btn" onclick="loadPage('Ide Project')">💡 Ide Project</button>
+        <button class="menu-btn" onclick="loadPage('Catatan')">📝 Catatan</button>
+    </div>
+
+    <div class="main">
+        <input type="text" id="title" placeholder="Judul Halaman...">
+        <div id="editor" contenteditable="true" placeholder="Mulai ketik rencanamu di sini..."></div>
+    </div>
+
+    <script>
+        const titleInput = document.getElementById('title');
+        const editor = document.getElementById('editor');
+        
+        // localstorage
+        function saveData() {
+            const pageTitle = titleInput.value;
+            const content = editor.innerHTML;
+            
+            if(pageTitle) {
+                localStorage.setItem('notion_content_' + pageTitle, content);
+                localStorage.setItem('last_opened_title', pageTitle);
+            }
+        }
+
+        window.loadPage = function(pageName) {
+            saveData();
+            
+            titleInput.value = pageName;
+            
+            const savedContent = localStorage.getItem('notion_content_' + pageName);
+            editor.innerHTML = savedContent || "";
+        }
+
+        editor.addEventListener('input', saveData);
+        titleInput.addEventListener('input', saveData);
+
+        const lastPage = localStorage.getItem('last_opened_title') || 'Jadwal Hari Ini';
+        loadPage(lastPage);
+    </script>
+</body>
+</html>
